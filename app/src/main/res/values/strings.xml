@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">mp3 Wallpaper</string>
+    <string name="set_Wallpaper">Set Wallpaper</string>
+    <string name="random">Find Random Wallpaper</string>
+</resources>
