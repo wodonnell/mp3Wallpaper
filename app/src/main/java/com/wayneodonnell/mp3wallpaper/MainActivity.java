@@ -37,7 +37,8 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     @BindView(R.id.btnSetWallpaper)  Button mBtnSetWallpaper;
-    @BindView(R.id.btnRandom)  Button mBtnRandom;
+    @BindView(R.id.btnPrev)  Button mBtnPrev;
+    @BindView(R.id.btnNext)  Button mBtnNext;
     @BindView(R.id.imageView) ImageView mImageView;
     @BindView(R.id.imageViewBackground) ImageView mImageViewBackground;
     @BindView(R.id.btnCollage)  Button mBtnCollage;
@@ -45,8 +46,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<String> mFileList=new ArrayList<String>();
     ArrayList<String> mAlbumList=new ArrayList<String>();
     ArrayList<String> mBlacklist=new ArrayList<String>();
-    Random rand = new Random();
+
     int position=0;
+    int next=1;
+    int prev=-1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +59,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         /* Set onClick listeners */
         mBtnSetWallpaper.setOnClickListener(this);
-        mBtnRandom.setOnClickListener(this);
+        mBtnPrev.setOnClickListener(this);
+        mBtnNext.setOnClickListener(this);
         mBtnCollage.setOnClickListener(this);
         getCurrentPaper(); //Populate screen with current system wallpaper
         //TODO - add button/menu option to refresh list if already loaded.
@@ -76,22 +80,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         {
             getFileList();
             mImageView.setImageBitmap(createCollage());
+            mImageViewBackground.setImageDrawable(mImageView.getDrawable());
         }
 
-        if(v==mBtnRandom){
+        if(v==mBtnNext){
             getFileList();
-
-            String filepath=getFilePath();
-
-            if(filepath!="") {
-                //Get album art from mp3 file
-                Bitmap bm=extractAlbumArt(filepath);
-                //Set ImageView to use bitmap
-                if(bm!=null){
-                    mImageView.setImageBitmap(bm);
-                    mImageViewBackground.setImageBitmap(bm);
-                }
-            }
+            setImage(next);
+        }
+        if(v==mBtnPrev){
+            getFileList();
+            setImage(prev);
         }
     }
     public void getFileList() {
@@ -125,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public String getFilePath(){
+    public String setImage(int direction){
         //TODO - Find actual path to SDCard
         //String sdpath = Environment.getExternalStorageDirectory().getAbsolutePath();
         //String sdpath= System.getenv("EXTERNAL_STORAGE");
@@ -134,27 +132,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String filepath="";
         //Pick the next image
         if(mFileList.size()>1){
-            //Get the next random number
-            //int rnd = rand.nextInt(mFileList.size() - 1);
             //Get next position
-            position+=1; // Get next position
-            if(position==mFileList.size()) {
+            position+=direction; // Get next position
+            if(position==mFileList.size() && direction==1) {
                 position=0;
             }
+            if(position==-1 && direction==-1) {
+                position=mFileList.size()-1;
+            }
 
-            //Pick a random file
-            //filepath = mFileList.get(rnd);// Get random item - often seems to repeat
             filepath = mFileList.get(position);
+
+            if(filepath!="") {
+                //Get album art from mp3 file
+                Bitmap bm=extractAlbumArt(filepath);
+                //Set ImageView to use bitmap
+                if(bm!=null){
+                    mImageView.setImageBitmap(bm);
+                    mImageViewBackground.setImageBitmap(bm);
+                }
+            }
         }
         return filepath;
     }
+
     public void getCurrentPaper(){
         WallpaperManager myWallpaperManager
                 = WallpaperManager.getInstance(getApplicationContext());
         Drawable db =  myWallpaperManager.getDrawable();
         if(db!=null){
-            mImageViewBackground.setImageDrawable(db);
             mImageView.setImageDrawable(db);
+            mImageViewBackground.setImageDrawable(db);
         }
     }
     public void setPaper(ImageView imageView){

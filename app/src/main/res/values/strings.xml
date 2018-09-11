@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">mp3 Wallpaper</string>
     <string name="set_Wallpaper">Set Wallpaper</string>
-    <string name="random">Find Random Wallpaper</string>
+    <string name="next">Next Wallpaper</string>
+    <string name="prev">Previous Wallpaper</string>
 </resources>

@@ -48,21 +48,44 @@
         android:background="@color/colorAccent"
         android:textColor="@color/colorTextIcons"
         android:visibility="visible"
-        android:layout_above="@+id/btnRandom"
+        android:layout_above="@+id/PrevNext"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginBottom="10dp" />
+<LinearLayout
+    android:id="@+id/PrevNext"
+    android:layout_above="@+id/btnSetWallpaper"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:weightSum="2"
+    android:orientation="horizontal">>
+
 
     <Button
+        android:id="@+id/btnPrev"
+        android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/random"
-        android:id="@+id/btnRandom"
-        android:background="@color/colorAccent"
-        android:textColor="@color/colorTextIcons"
-        android:visibility="visible"
-        android:layout_above="@+id/btnSetWallpaper"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginBottom="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/colorAccent"
+        android:text="@string/prev"
+        android:textColor="@color/colorTextIcons"
+        android:visibility="visible" />
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft   ="10dp"
+        android:background="@color/colorAccent"
+        android:text="@string/next"
+        android:textColor="@color/colorTextIcons"
+        android:visibility="visible" />
+</LinearLayout>
 </RelativeLayout>
