@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.btnCollage)  Button mBtnCollage;
 
     ArrayList<String> mFileList=new ArrayList<String>();
+    Random rand = new Random();
+    int position=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v){
-        //TODO - Create a random collage
+        //TODO - Maybe add option to swipe through images.
         if(v==mBtnSetWallpaper){
             /* Clear the image */
             //mImageView.setImageResource(0);
@@ -109,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         for(File file: files){
             mFileList.add(file.toString());
         }
+        //Shuffle the list
+        Collections.shuffle(mFileList,new Random());
     }
 
     public String getFilePath(){
@@ -118,13 +122,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //String sdpath="/storage/C219-D78B";  //Hardcoded path - need to work out how to find this!
         //String sdpath="/storage/emulated/0/Download";  //Hardcoded path - need to work out how to find this!
         String filepath="";
-        //Pick one of the files at random
+        //Pick the next image
         if(mFileList.size()>1){
-            Random rand = new Random();
-            int rnd = rand.nextInt(mFileList.size() - 1);
+            //Get the next random number
+            //int rnd = rand.nextInt(mFileList.size() - 1);
+            //Get next position
+            position+=1; // Get next position
+            if(position==mFileList.size()) {
+                position=0;
+            }
 
             //Pick a random file
-            filepath = mFileList.get(rnd);
+            //filepath = mFileList.get(rnd);// Get random item - often seems to repeat
+            filepath = mFileList.get(position);
         }
         return filepath;
     }
@@ -133,9 +143,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Set wallpaper to content of imageView
         WallpaperManager myWallpaperManager
                 = WallpaperManager.getInstance(getApplicationContext());
+        //TODO - Ask user whether to set Home,Lock or both
         try {
             BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
-            myWallpaperManager.setBitmap(drawable.getBitmap());
+            myWallpaperManager.setBitmap(drawable.getBitmap(),null,false, WallpaperManager.FLAG_LOCK + WallpaperManager.FLAG_SYSTEM);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -197,8 +208,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private Bitmap createCollage(){
-        // TODO - Creates a collage of 16 bitmaps
-        // TODO - Collage needs to resize images so all same size
         //Get bitmaps
         String[] collagelist=new String[16];
 
@@ -231,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int dstHeight = (int) (dstWidth / srcAspectRatio);
 
         float resizeRatio = (float) srcWidth / dstWidth;
+        resizeRatio=1; //We always want squares in this app.
 
         /* Calculate gaussian's radius */
         float sigma = resizeRatio / (float) Math.PI;
