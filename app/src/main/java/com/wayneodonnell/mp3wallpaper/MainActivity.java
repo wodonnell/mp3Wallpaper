@@ -1,17 +1,16 @@
 package com.wayneodonnell.mp3wallpaper;
 
 import android.Manifest;
+import android.app.FragmentManager;
 import android.app.WallpaperManager;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
-import android.os.Environment;
 import android.renderscript.Allocation;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
@@ -21,24 +20,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.renderscript.*;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Random;
 
 import butterknife.BindView;
@@ -48,9 +39,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.btnSetWallpaper)  Button mBtnSetWallpaper;
     @BindView(R.id.btnRandom)  Button mBtnRandom;
     @BindView(R.id.imageView) ImageView mImageView;
+    @BindView(R.id.imageViewBackground) ImageView mImageViewBackground;
     @BindView(R.id.btnCollage)  Button mBtnCollage;
 
     ArrayList<String> mFileList=new ArrayList<String>();
+    ArrayList<String> mAlbumList=new ArrayList<String>();
+    ArrayList<String> mBlacklist=new ArrayList<String>();
     Random rand = new Random();
     int position=0;
 
@@ -64,13 +58,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnSetWallpaper.setOnClickListener(this);
         mBtnRandom.setOnClickListener(this);
         mBtnCollage.setOnClickListener(this);
-        //Get list of files when app started
-        getFileList();
+        getCurrentPaper(); //Populate screen with current system wallpaper
+        //TODO - add button/menu option to refresh list if already loaded.
     }
 
     @Override
     public void onClick(View v){
         //TODO - Maybe add option to swipe through images.
+        //TODO - Option to thumbs down a cover so it doesn't show.
         if(v==mBtnSetWallpaper){
             /* Clear the image */
             //mImageView.setImageResource(0);
@@ -79,10 +74,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if(v==mBtnCollage)
         {
+            getFileList();
             mImageView.setImageBitmap(createCollage());
         }
 
         if(v==mBtnRandom){
+            getFileList();
+
             String filepath=getFilePath();
 
             if(filepath!="") {
@@ -91,28 +89,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //Set ImageView to use bitmap
                 if(bm!=null){
                     mImageView.setImageBitmap(bm);
+                    mImageViewBackground.setImageBitmap(bm);
                 }
             }
-
         }
     }
     public void getFileList() {
-        //Before accessing files, need to check permission granted
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            // If permission is not granted need to request permission
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-        }
+        if(mFileList.size()==0){
+            //Before accessing files, need to check permission granted
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                // If permission is not granted need to request permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            }
 
-        List<File> files = getListFiles(new File("/storage/C219-D78B/Music/"));
+            List<File> files = getListFiles(new File("/storage/C219-D78B/Music/"));
 
-        //Add each file, add name to the list
-        for(File file: files){
-            mFileList.add(file.toString());
+            //Add each file, add name to the list
+            String albumPath="";
+            String songPath="";
+            mAlbumList.clear();
+            mFileList.clear();
+            for(File file: files){
+                //Only add if the album hasn't already been added and album isn't on blacklist
+                songPath=file.toString();
+                albumPath=songPath.substring(0,songPath.lastIndexOf("/"));
+                if(!mAlbumList.contains(albumPath) && !mBlacklist.contains(albumPath)) {
+                    mAlbumList.add(albumPath);
+                    mFileList.add(file.toString());
+                }
+            }
+            //Shuffle the list
+            Collections.shuffle(mFileList,new Random());
         }
-        //Shuffle the list
-        Collections.shuffle(mFileList,new Random());
     }
 
     public String getFilePath(){
@@ -138,7 +148,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return filepath;
     }
-
+    public void getCurrentPaper(){
+        WallpaperManager myWallpaperManager
+                = WallpaperManager.getInstance(getApplicationContext());
+        Drawable db =  myWallpaperManager.getDrawable();
+        if(db!=null){
+            mImageViewBackground.setImageDrawable(db);
+            mImageView.setImageDrawable(db);
+        }
+    }
     public void setPaper(ImageView imageView){
         //Set wallpaper to content of imageView
         WallpaperManager myWallpaperManager
