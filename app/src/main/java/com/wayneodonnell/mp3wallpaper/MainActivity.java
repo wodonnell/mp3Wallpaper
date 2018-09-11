@@ -3,6 +3,8 @@ package com.wayneodonnell.mp3wallpaper;
 import android.Manifest;
 import android.app.FragmentManager;
 import android.app.WallpaperManager;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,10 +22,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,11 +49,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     ArrayList<String> mFileList=new ArrayList<String>();
     ArrayList<String> mAlbumList=new ArrayList<String>();
-    ArrayList<String> mBlacklist=new ArrayList<String>();
+    ArrayList<String> mBlacklist=new ArrayList<String>(); // TODO - add blacklist
+    ArrayList<String> mFilterList=new ArrayList<String>(); //TODO - add search
+    ArrayList<String> mFavouriteList=new ArrayList<String>(); //TODO - add favourites
 
     int position=0;
     int next=1;
     int prev=-1;
+    boolean onlyFavourites=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +75,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v){
-        //TODO - Maybe add option to swipe through images.
         //TODO - Option to thumbs down a cover so it doesn't show.
         if(v==mBtnSetWallpaper){
             /* Clear the image */
             //mImageView.setImageResource(0);
             setPaper(mImageView);
-            Toast.makeText(MainActivity.this,"Wallpaper set",Toast.LENGTH_LONG).show();
         }
         if(v==mBtnCollage)
         {
@@ -109,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String songPath="";
             mAlbumList.clear();
             mFileList.clear();
+            mFilterList.clear();
             for(File file: files){
                 //Only add if the album hasn't already been added and album isn't on blacklist
                 songPath=file.toString();
@@ -131,7 +137,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //String sdpath="/storage/emulated/0/Download";  //Hardcoded path - need to work out how to find this!
         String filepath="";
         //Pick the next image
-        if(mFileList.size()>1){
+        //If a filter is in place then use the filtered list
+        //Filter could have been applied to main list or favourites
+        if (mFilterList.size() > 0){
+            //Get next position
+            position+=direction; // Get next position
+            if(position==mFilterList.size() && direction==1) {
+                position=0;
+            }
+            if(position==-1 && direction==-1) {
+                position=mFilterList.size()-1;
+            }
+
+            filepath = mFilterList.get(position);
+
+            if(filepath!="") {
+                //Get album art from mp3 file
+                Bitmap bm=extractAlbumArt(filepath);
+                //Set ImageView to use bitmap
+                if(bm!=null){
+                    mImageView.setImageBitmap(bm);
+                    mImageViewBackground.setImageBitmap(bm);
+                }
+            }
+        }
+
+        //If only looking at favourites
+        else if(onlyFavourites){
+            //Get next position
+            position+=direction; // Get next position
+            if(position==mFavouriteList.size() && direction==1) {
+                position=0;
+            }
+            if(position==-1 && direction==-1) {
+                position=mFavouriteList.size()-1;
+            }
+
+            filepath = mFavouriteList.get(position);
+
+            if(filepath!="") {
+                //Get album art from mp3 file
+                Bitmap bm=extractAlbumArt(filepath);
+                //Set ImageView to use bitmap
+                if(bm!=null){
+                    mImageView.setImageBitmap(bm);
+                    mImageViewBackground.setImageBitmap(bm);
+                }
+            }
+        }
+        //Otherwise use the main file list
+        else if(mFileList.size()>1){
             //Get next position
             position+=direction; // Get next position
             if(position==mFileList.size() && direction==1) {
@@ -165,17 +220,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mImageViewBackground.setImageDrawable(db);
         }
     }
+
     public void setPaper(ImageView imageView){
         //Set wallpaper to content of imageView
-        WallpaperManager myWallpaperManager
-                = WallpaperManager.getInstance(getApplicationContext());
-        //TODO - Ask user whether to set Home,Lock or both
-        try {
-            BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
-            myWallpaperManager.setBitmap(drawable.getBitmap(),null,false, WallpaperManager.FLAG_LOCK + WallpaperManager.FLAG_SYSTEM);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Ask user where to set wallpaper then set Home screen and/or lock screen accordingly.
+        String[] options = {"Home screen", "Lock screen", "Home and Lock screens"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Where to set wallpaper?");
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // the user clicked on colors[which]
+                int params=-1;
+                if(which==0){
+                    params=WallpaperManager.FLAG_SYSTEM;
+                }
+                else if(which==1){
+                    params=WallpaperManager.FLAG_LOCK;
+                }
+                else if (which==2) {
+                    params=WallpaperManager.FLAG_LOCK + WallpaperManager.FLAG_SYSTEM;
+                }
+                if(params>-1) {
+                    WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+                    try {
+                        BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
+                        myWallpaperManager.setBitmap(drawable.getBitmap(), null, false,params);
+                        Toast.makeText(MainActivity.this, "Wallpaper set", Toast.LENGTH_LONG).show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     public Bitmap extractAlbumArt(String filename){
@@ -258,6 +338,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return result;
     }
+
     public static Bitmap resizeBitmap(RenderScript rs, Bitmap src, int dstWidth) {
         Bitmap.Config  bitmapConfig = src.getConfig();
         int srcWidth = src.getWidth();
