@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
+import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
@@ -20,12 +21,17 @@ import android.renderscript.ScriptIntrinsicResize;
 import android.renderscript.Type;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.support.v7.widget.SearchView;
 import android.widget.Toast;
 import android.app.AlertDialog;
 
@@ -54,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<String> mFavouriteList=new ArrayList<String>(); //TODO - add favourites
 
     int position=0;
+    int heldPosition=0;
     int next=1;
     int prev=-1;
     boolean onlyFavourites=false;
@@ -74,11 +81,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_filter, menu);
+        ButterKnife.bind(this);
+
+        MenuItem menuItem = menu.findItem(R.id.action_filter);
+        SearchView searchView=(SearchView) menuItem.getActionView();
+        //Add listener
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                getFileList();  //Ensure list is populated
+                heldPosition=position; //Store current position
+                getFilterList(query);
+
+                if(mFilterList.size()==0){
+                    Toast.makeText(MainActivity.this,"Nothing found for '"+query+"'",Toast.LENGTH_SHORT).show();
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+
+        });
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+
+            @Override
+            public boolean onClose() {
+                mFilterList.clear(); //Clear the filter
+                position=heldPosition+1;
+                setImage(prev); //Restore previous image
+                return false;
+            }
+
+
+        });
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onClick(View v){
         //TODO - Option to thumbs down a cover so it doesn't show.
         if(v==mBtnSetWallpaper){
-            /* Clear the image */
-            //mImageView.setImageResource(0);
             setPaper(mImageView);
         }
         if(v==mBtnCollage)
@@ -95,6 +150,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(v==mBtnPrev){
             getFileList();
             setImage(prev);
+        }
+    }
+    public void getFilterList(String query){
+        //Add each file, add name to the list
+        query=query.toLowerCase();
+        mFilterList.clear();
+        String albumPath="";
+
+        for(String item: mFileList){
+            //Check each entry in filelist and add to filter if specified text appears.
+            //item=item.toLowerCase();
+
+            albumPath=item.toLowerCase().substring(0,item.toLowerCase().lastIndexOf("/"));
+            if(albumPath.contains(query)) {
+                mFilterList.add(item);
+            }
+        }
+        if(mFilterList.size()>0){
+            //Refresh the list being used
+            position = -1;
+            setImage(next);
         }
     }
     public void getFileList() {
@@ -124,8 +200,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mFileList.add(file.toString());
                 }
             }
-            //Shuffle the list
-            Collections.shuffle(mFileList,new Random());
+            //TODO - add option to shuffle the list
+            //Collections.shuffle(mFileList,new Random());
         }
     }
 
