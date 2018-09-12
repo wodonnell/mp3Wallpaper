@@ -38,6 +38,7 @@ import android.app.AlertDialog;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -202,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             //TODO - add option to shuffle the list
             //Collections.shuffle(mFileList,new Random());
+            Collections.sort(mFileList);
         }
     }
 

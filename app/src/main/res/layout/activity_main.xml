@@ -32,26 +32,26 @@
         android:layout_height="wrap_content"
         android:text="@string/set_Wallpaper"
         android:id="@+id/btnSetWallpaper"
-        android:background="@color/colorAccent"
+        android:background="@drawable/button_background"
         android:textColor="@color/colorTextIcons"
         android:visibility="visible"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="10dp" />
+        android:layout_margin="10dp" />
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Collage"
         android:id="@+id/btnCollage"
-        android:background="@color/colorAccent"
+        android:background="@drawable/button_background"
         android:textColor="@color/colorTextIcons"
         android:visibility="visible"
         android:layout_above="@+id/PrevNext"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="10dp" />
+        android:layout_margin="10dp" />
 <LinearLayout
     android:id="@+id/PrevNext"
     android:layout_above="@+id/btnSetWallpaper"
@@ -68,10 +68,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="10dp"
-        android:layout_marginRight="10dp"
-        android:background="@color/colorAccent"
+        android:layout_margin="10dp"
         android:text="@string/prev"
+        android:background="@drawable/button_background"
         android:textColor="@color/colorTextIcons"
         android:visibility="visible" />
     <Button
@@ -81,9 +80,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_marginBottom="10dp"
-        android:layout_marginLeft   ="10dp"
-        android:background="@color/colorAccent"
+        android:layout_margin  ="10dp"
+        android:background="@drawable/button_background"
         android:text="@string/next"
         android:textColor="@color/colorTextIcons"
         android:visibility="visible" />
