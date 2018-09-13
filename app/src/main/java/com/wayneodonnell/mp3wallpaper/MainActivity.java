@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.WallpaperManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,8 +33,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.support.v7.widget.SearchView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.app.AlertDialog;
+
+import com.wayneodonnell.mp3wallpaper.models.SongInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +50,9 @@ import java.util.Random;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM;
+import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     @BindView(R.id.btnSetWallpaper)  Button mBtnSetWallpaper;
     @BindView(R.id.btnPrev)  Button mBtnPrev;
@@ -54,23 +61,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.imageViewBackground) ImageView mImageViewBackground;
     @BindView(R.id.btnCollage)  Button mBtnCollage;
 
+    private SharedPreferences mSharedPreferences;
+    private SharedPreferences.Editor mEditor;
+
     ArrayList<String> mFileList=new ArrayList<String>();
     ArrayList<String> mAlbumList=new ArrayList<String>();
     ArrayList<String> mBlacklist=new ArrayList<String>(); // TODO - add blacklist
-    ArrayList<String> mFilterList=new ArrayList<String>(); //TODO - add search
+    ArrayList<String> mFilterList=new ArrayList<String>();
     ArrayList<String> mFavouriteList=new ArrayList<String>(); //TODO - add favourites
 
-    int position=0;
-    int heldPosition=0;
+    int position=-99; //Start as -99 as this will never be reached again in code
+    int favPosition=0;
+    int heldPosition=-99;
     int next=1;
     int prev=-1;
     boolean onlyFavourites=false;
+    String currentPath="";
+    String currentAlbum="";
+    String currentArtist="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        // set up shared preferences
+        mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+        mEditor=mSharedPreferences.edit();
 
         /* Set onClick listeners */
         mBtnSetWallpaper.setOnClickListener(this);
@@ -116,7 +134,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public boolean onClose() {
                 mFilterList.clear(); //Clear the filter
-                position=heldPosition+1;
+                if(heldPosition>-99)
+                {
+                    position = heldPosition + 1;
+                    heldPosition=-99;
+                }
+                else {
+                    position+=1;
+                }
+
                 setImage(prev); //Restore previous image
                 return false;
             }
@@ -174,7 +200,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             setImage(next);
         }
     }
+
     public void getFileList() {
+        ////TODO - Add loading spinner - currently struggling to get this to show
         if(mFileList.size()==0){
             //Before accessing files, need to check permission granted
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -183,119 +211,116 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
             }
+            //TODO - Find actual path to SDCard
+            //String sdpath = Environment.getExternalStorageDirectory().getAbsolutePath();
+            //String sdpath= System.getenv("EXTERNAL_STORAGE");
+            //String sdpath="/storage/C219-D78B";  //Hardcoded path - need to work out how to find this!
+            //String sdpath="/storage/emulated/0/Download";  //Hardcoded path - need to work out how to find this!
 
             List<File> files = getListFiles(new File("/storage/C219-D78B/Music/"));
 
             //Add each file, add name to the list
-            String albumPath="";
-            String songPath="";
+            String albumPath = "";
+            String songPath = "";
             mAlbumList.clear();
             mFileList.clear();
             mFilterList.clear();
-            for(File file: files){
+            for (File file : files) {
                 //Only add if the album hasn't already been added and album isn't on blacklist
-                songPath=file.toString();
-                albumPath=songPath.substring(0,songPath.lastIndexOf("/"));
-                if(!mAlbumList.contains(albumPath) && !mBlacklist.contains(albumPath)) {
+                songPath = file.toString();
+                albumPath = songPath.substring(0, songPath.lastIndexOf("/"));
+                if (!mAlbumList.contains(albumPath) && !mBlacklist.contains(albumPath)) {
                     mAlbumList.add(albumPath);
                     mFileList.add(file.toString());
                 }
             }
             //TODO - add option to shuffle the list
             //Collections.shuffle(mFileList,new Random());
+            //Sort the list into order
             Collections.sort(mFileList);
         }
     }
 
-    public String setImage(int direction){
-        //TODO - Find actual path to SDCard
-        //String sdpath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        //String sdpath= System.getenv("EXTERNAL_STORAGE");
-        //String sdpath="/storage/C219-D78B";  //Hardcoded path - need to work out how to find this!
-        //String sdpath="/storage/emulated/0/Download";  //Hardcoded path - need to work out how to find this!
-        String filepath="";
+    public void setImage(int direction){
         //Pick the next image
+
         //If a filter is in place then use the filtered list
         //Filter could have been applied to main list or favourites
+
         if (mFilterList.size() > 0){
-            //Get next position
-            position+=direction; // Get next position
-            if(position==mFilterList.size() && direction==1) {
-                position=0;
-            }
-            if(position==-1 && direction==-1) {
-                position=mFilterList.size()-1;
-            }
-
-            filepath = mFilterList.get(position);
-
-            if(filepath!="") {
-                //Get album art from mp3 file
-                Bitmap bm=extractAlbumArt(filepath);
-                //Set ImageView to use bitmap
-                if(bm!=null){
-                    mImageView.setImageBitmap(bm);
-                    mImageViewBackground.setImageBitmap(bm);
-                }
-            }
+            //Get next from mFilterList
+            position=setFile(mFilterList,position,direction);
         }
-
         //If only looking at favourites
         else if(onlyFavourites){
-            //Get next position
-            position+=direction; // Get next position
-            if(position==mFavouriteList.size() && direction==1) {
-                position=0;
-            }
-            if(position==-1 && direction==-1) {
-                position=mFavouriteList.size()-1;
-            }
-
-            filepath = mFavouriteList.get(position);
-
-            if(filepath!="") {
-                //Get album art from mp3 file
-                Bitmap bm=extractAlbumArt(filepath);
-                //Set ImageView to use bitmap
-                if(bm!=null){
-                    mImageView.setImageBitmap(bm);
-                    mImageViewBackground.setImageBitmap(bm);
-                }
-            }
+            //Get next from mFavouriteList
+            favPosition=setFile(mFavouriteList,favPosition,direction);
         }
         //Otherwise use the main file list
         else if(mFileList.size()>1){
-            //Get next position
-            position+=direction; // Get next position
-            if(position==mFileList.size() && direction==1) {
-                position=0;
-            }
-            if(position==-1 && direction==-1) {
-                position=mFileList.size()-1;
-            }
+            //Get next from mFileList
+            position=setFile(mFileList,position,direction);
+        }
+    }
 
-            filepath = mFileList.get(position);
-
-            if(filepath!="") {
-                //Get album art from mp3 file
-                Bitmap bm=extractAlbumArt(filepath);
-                //Set ImageView to use bitmap
-                if(bm!=null){
-                    mImageView.setImageBitmap(bm);
-                    mImageViewBackground.setImageBitmap(bm);
-                }
+    public int setFile(ArrayList<String> aList,int pos, int direction){
+        String filepath="";
+        //If position is -99 then we have clicked Prev or next for the first time
+        //See if current wallpaper is still available in the array and if so, set its position
+        if(pos==-99){
+            if(aList.contains(currentPath)){
+                pos=aList.indexOf(currentPath);
+            }
+            else {
+                pos=0;
             }
         }
-        return filepath;
+        //Get next position
+        pos+=direction; // Get next position
+        if(pos==aList.size() && direction==1) {
+            pos=0;
+        }
+        if(pos==-1 && direction==-1) {
+            pos=aList.size()-1;
+        }
+
+        filepath = aList.get(pos);
+
+        if(filepath!="") {
+            SongInfo song=new SongInfo(filepath);
+            //Get album art from mp3 file
+            Bitmap bm=song.getAlbumCover();
+            currentPath=filepath; // Set global variable so we always have a record of current path
+            currentAlbum=song.getAlbumTitle();
+            currentArtist=song.getArtistName();
+            //Bitmap bm=extractAlbumArt(filepath);
+            //String albumTitle=extractAlbumName(filepath);
+            //String artistName=extractArtistName(filepath);
+            //Set ImageView to use bitmap
+            if(bm!=null){
+                //Set the images
+                mImageView.setImageBitmap(bm);
+                mImageViewBackground.setImageBitmap(bm);
+                //TODO - Display album and artist somewhere
+                updateMeta(currentAlbum,currentArtist);// Show album and artist
+            }
+        }
+
+        return pos; //Return updated position
     }
 
     public void getCurrentPaper(){
+        //TODO - getCurrentPaper - retrieve album name and artist from shared preferences
+        currentPath=mSharedPreferences.getString(Constants.PREFERENCES_LASTPATH,null);
+        String albumName=mSharedPreferences.getString(Constants.PREFERENCES_LASTALBUM,null);
+        String artistName=mSharedPreferences.getString(Constants.PREFERENCES_LASTARTIST,null);
         WallpaperManager myWallpaperManager
                 = WallpaperManager.getInstance(getApplicationContext());
         Drawable db =  myWallpaperManager.getDrawable();
         if(db!=null){
             mImageView.setImageDrawable(db);
             mImageViewBackground.setImageDrawable(db);
+            updateMeta(albumName,artistName);
         }
     }
 
@@ -326,6 +351,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
                         myWallpaperManager.setBitmap(drawable.getBitmap(), null, false,params);
                         Toast.makeText(MainActivity.this, "Wallpaper set", Toast.LENGTH_LONG).show();
+                        //TODO - setPaper - store album name and artist to shared preferences
+                        addToSharedPreferences(Constants.PREFERENCES_LASTPATH,currentPath); //Get from global variable
+                        addToSharedPreferences(Constants.PREFERENCES_LASTALBUM,currentAlbum); //Get from global variable
+                        addToSharedPreferences(Constants.PREFERENCES_LASTARTIST,currentArtist); //Get from global variable
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -392,6 +421,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private Bitmap createCollage(){
+        //TODO - createCollage - sometimes collage is offset incorrectly
         //Get bitmaps
         String[] collagelist=new String[16];
 
@@ -405,7 +435,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //ScaledBitmap not very good quality
             //collagebitmaps[i]= Bitmap.createScaledBitmap(extractAlbumArt(collagelist[i]),100,100,false);
             RenderScript RS = RenderScript.create(this);
-            collagebitmaps[i]= resizeBitmap(RS,extractAlbumArt(mFileList.get(i)),100);
+
+            //Get album art from mp3 file
+            SongInfo song=new SongInfo(mFileList.get(i));
+            Bitmap bm=song.getAlbumCover();
+            collagebitmaps[i]= resizeBitmap(RS,bm,100);
         }
 
         Bitmap result = Bitmap.createBitmap(collagebitmaps[0].getWidth() * 4, collagebitmaps[0].getHeight() * 4, Bitmap.Config.ARGB_8888);
@@ -460,5 +494,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         resizeIntrinsic.destroy();
 
         return dst;
+    }
+
+    public void addToSharedPreferences(String key, String value){
+        mEditor.putString(key,value).apply();
+    }
+    public void updateMeta(String album, String artist) {
+        //If album name not blank then show details
+        if(!album.equals("")) {
+            Toast.makeText(MainActivity.this, "Artist: " + artist + "\nAlbum: " + album, Toast.LENGTH_SHORT).show();
+        }
     }
 }
