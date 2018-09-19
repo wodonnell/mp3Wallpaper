@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <ImageView android:id="@+id/imageViewBackground"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_alignParentEnd="true"
-    android:layout_alignParentTop="true"
-    android:contentDescription="@string/app_name"
-    android:scaleType="centerCrop"
-    android:alpha="0.3"
-    app:srcCompat="@drawable/example" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerCrop"
+        android:alpha="0.3"
+        app:srcCompat="@drawable/example" />
 
     <ImageView
         android:id="@+id/imageView"
@@ -160,5 +159,4 @@
         android:background="@color/colorAccent"
         android:textColor="@color/colorTextIcons"
         android:text="TextView" />
-
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

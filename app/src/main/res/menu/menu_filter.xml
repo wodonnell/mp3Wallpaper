@@ -7,4 +7,22 @@
         app:actionViewClass="android.support.v7.widget.SearchView"
         android:title="Filter">
     </item>
+    <item
+        android:id="@+id/action_favourites"
+        android:icon="@drawable/baseline_favorite_white_24"
+        app:showAsAction="always"
+        android:title="Favourites">
+    </item>
+    <item
+        android:id="@+id/action_blacklist"
+        android:icon="@drawable/baseline_thumb_down_white_24"
+        app:showAsAction="always"
+        android:title="Blacklist">
+    </item>
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/baseline_refresh_24"
+        app:showAsAction="always"
+        android:title="Refresh">
+    </item>
 </menu>

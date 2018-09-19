@@ -8,4 +8,8 @@
     <color name="colorPrimaryText">#212121</color>
     <color name="colorSecondaryText">#727272</color>
     <color name="colorDivider">#B6B6B6</color>
+    <color name="colorBlacklistHeader">#000000</color>
+    <color name="colorBlacklistText">#FAFAFA</color>
+    <color name="colorFavHeader">#c12424</color>
+    <color name="colorFavText">#ecda14</color>
 </resources>
