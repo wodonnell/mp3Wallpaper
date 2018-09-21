@@ -9,5 +9,6 @@ public class Constants {
         public static final String ALBUMS_FILENAME="albumList.list";
         public static final String FAVOURITES_FILENAME="favouritesList.list";
         public static final String BLACKLIST_FILENAME="blacklistList.list";
+        public static final int REQUEST_DIRECTORY=1;
         //public static final String PREFERENCES_STARTFOLDER="/storage/C219-D78B/Music/";
 }

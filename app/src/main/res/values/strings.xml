@@ -3,7 +3,7 @@
     <string name="set_Wallpaper">Set Wallpaper</string>
     <string name="next">Next Wallpaper</string>
     <string name="prev">Previous Wallpaper</string>
-    <string name="nothingFound">Nothing found.</string>
+    <string name="nothingFound">Nothing found</string>
     <string name="favourites">Showing favourites</string>
     <string name="blacklist">Showing blacklist</string>
     <string name="listRefreshed">List refreshed</string>

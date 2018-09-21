@@ -1,6 +1,7 @@
 package com.wayneodonnell.mp3wallpaper;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.WallpaperManager;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.icu.text.UnicodeSetSpanner;
 import android.media.MediaMetadataRetriever;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
 import android.renderscript.RenderScript;
@@ -27,6 +29,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,6 +63,7 @@ import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import lib.folderpicker.FolderPicker;
 
 import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM;
 import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST;
@@ -103,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String currentArtist="";
     boolean inSearch=false;
     boolean searchActive=false;
+    int FOLDERPICKER_CODE=1;
+    String startFolder="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +129,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnBlacklist.setOnClickListener(this);
         loadSavedLists();
         getCurrentPaper(); //Populate screen with current system wallpaper
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == FOLDERPICKER_CODE && resultCode == Activity.RESULT_OK) {
+            String folderLocation = intent.getExtras().getString("data");
+            addToSharedPreferences(Constants.PREFERENCES_STARTFOLDER,folderLocation);
+            getFileList(); //Refresh file list with new folder
+        }
     }
 
     @Override
@@ -305,15 +319,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return true;
                 }
             }
-            // Reload list of files
-            if (id == R.id.action_refresh) {
-                getFileList();
-                Toast.makeText(MainActivity.this, R.string.listRefreshed, Toast.LENGTH_SHORT).show();
-                return true;
-            }
+        }
+
+        // Reload list of files
+        if (id == R.id.action_refresh) {
+            getFileListOption();
+            return true;
         }
         return super.onOptionsItemSelected(item);
-    };
+    }
 
 
     @Override
@@ -368,13 +382,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             saveFile(Constants.BLACKLIST_FILENAME,mBlacklist);
         }
     }
+
     public void getFilterList(String query){
         //Add each file, add name to the list
         if(!inSearch) {
             inSearch=true;
             query = query.toLowerCase();
             mFilterList.clear();
-            String albumPath = "";
+            String albumPath;
 
             //Determine which list to search in
             if (onlyFavourites) {
@@ -411,7 +426,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             inSearch=false;
         }
     }
-
+    public void getFileListOption(){
+        startFolder = mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER, null);
+        if(TextUtils.isEmpty(startFolder)){
+            setStartFolder();
+        }
+        else {
+            String[] options = {"Refresh '" + startFolder+ "'", "Select new folder", "Cancel"};
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Refresh files");
+            builder.setItems(options, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    int params = -1;
+                    if (which == 0) {
+                        getFileList();
+                    } else if (which == 1) {
+                        setStartFolder();
+                    }
+                    dialog.cancel();
+                }
+            });
+            builder.show();
+        }
+    }
     public void getFileList() {
         //TODO - Add loading spinner - currently struggling to get this to show
         //Before accessing files, need to check permission granted
@@ -422,20 +460,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         }
 
-        //Retrieve startfolder  from shared preferences
-        String startFolder=mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER,null);
+        //Retrieve startfolder from shared preferences
+        startFolder = mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER, null);
+        if(!TextUtils.isEmpty(startFolder)){
 
-        //TODO - Allow user to browse for folder
-        //String sdpath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        //String sdpath= System.getenv("EXTERNAL_STORAGE");
-        //String sdpath="/storage/C219-D78B";  //Hardcoded path - need to work out how to find this!
-        //String sdpath="/storage/emulated/0/Download";  //Hardcoded path - need to work out how to find this!
-        if(!startFolder.equals("")) {
             List<File> files = getListFiles(new File(startFolder));
 
             //Add each file, add name to the list
-            String albumPath = "";
-            String songPath = "";
+            String albumPath;
+            String songPath;
             mAlbumList.clear();
             mFileList.clear();
             mFilterList.clear();
@@ -453,11 +486,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Collections.sort(mFileList);
             //Save the list to a file
             saveFile(Constants.ALBUMS_FILENAME, mFileList);
+            Toast.makeText(MainActivity.this, R.string.listRefreshed, Toast.LENGTH_SHORT).show();
         }
-        else{
-            Toast.makeText(MainActivity.this, "Please select directory.", Toast.LENGTH_SHORT).show();
+        else {
+            setStartFolder();
         }
-
+    }
+    public void setStartFolder(){
+        //String startFolder="/storage/C219-D78B/Music/";
+        Intent intent = new Intent(MainActivity.this, FolderPicker.class);
+        String startFolder = mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER, null);
+        if(!TextUtils.isEmpty(startFolder)){
+            intent.putExtra("location", startFolder);
+        }
+        startActivityForResult(intent, FOLDERPICKER_CODE);
     }
 
     public void setImage(int direction){
@@ -488,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public int setFile(ArrayList<String> aList,int pos, int direction){
-        String filepath="";
+        String filepath;
         //If position is -99 then we have clicked Prev or next for the first time
         //See if current wallpaper is still available in the array and if so, set its position
         if(aList.size()==0){
@@ -518,9 +560,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     break;
                 }
             }
-            ;
 
-            if (filepath != "") {
+            if (!TextUtils.isEmpty(filepath)) {
                 SongInfo song = new SongInfo(filepath);
                 //Get album art from mp3 file
                 Bitmap bm = song.getAlbumCover();
@@ -536,7 +577,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 else {
                     //No image found - display default
                     mImageView.setImageResource(R.drawable.example);
-                    mImageViewBackground.setImageBitmap(bm);
+                    mImageViewBackground.setImageResource(R.drawable.example);
                 }
                 //Ensure Favourite and Blacklist buttons are available
                 //If the image is a favourite then icon should change to indicate this, otherwise should allow to add as favourite
@@ -571,19 +612,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             position = 0-1;
         }
         setImage(next);
-        /*WallpaperManager myWallpaperManager
-                = WallpaperManager.getInstance(getApplicationContext());
-        Drawable db =  myWallpaperManager.getDrawable();
-        if(db!=null){
-            mImageView.setImageDrawable(db);
-            mImageViewBackground.setImageDrawable(db);
-            updateMeta(albumName,artistName);
-        }*/
     }
 
     public void setPaper(ImageView imageView){
         //Set wallpaper to content of imageView
-        //Ask user where to set wallpaper then set Home screen and/or lock screen accordingly.
         String[] options = {"Home screen", "Lock screen", "Home and Lock screens"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -591,7 +623,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builder.setItems(options, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // the user clicked on colors[which]
                 int params=-1;
                 if(which==0){
                     params=WallpaperManager.FLAG_SYSTEM;
@@ -620,6 +651,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         builder.show();
+        //Ask user where to set wallpaper then set Home screen and/or lock screen accordingly.
     }
 
     private List<File> getListFiles(File parentDir) {
@@ -661,7 +693,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //Ensure image not on blacklist and not already in collage
             while(mBlacklist.contains(mFileList.get(rnd)) || collageArray.contains(mFileList.get(rnd)) ){
                 rnd = rand.nextInt(mFileList.size() - 1);
-            };
+            }
             collageArray.add(mFileList.get(rnd));
             //ScaledBitmap not very good quality
             //collagebitmaps[i]= Bitmap.createScaledBitmap(extractAlbumArt(collagelist[i]),100,100,false);
@@ -695,8 +727,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         float srcAspectRatio = (float) srcWidth / srcHeight;
         int dstHeight = (int) (dstWidth / srcAspectRatio);
 
-        float resizeRatio = (float) srcWidth / dstWidth;
-        resizeRatio=1; //We always want squares in this app.
+        float resizeRatio=1; //We always want squares in this app.
 
         /* Calculate gaussian's radius */
         float sigma = resizeRatio / (float) Math.PI;
@@ -800,21 +831,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-/*
-    public void saveFileList(){
-        String fileContents;
-        JSONArray jsonArray=new JSONArray(mFileList);
-        fileContents=jsonArray.toString();
-        FileOutputStream outputStream;
-
-        try {
-            outputStream = openFileOutput(Constants.ALBUMS_FILENAME, Context.MODE_PRIVATE);
-            outputStream.write(fileContents.getBytes());
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
 
     public void saveFile(String filename, ArrayList<String> arrayList){
         String fileContents;
