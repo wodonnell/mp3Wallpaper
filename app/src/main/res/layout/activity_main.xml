@@ -12,7 +12,7 @@
     android:contentDescription="@string/app_name"
     android:scaleType="centerCrop"
     android:alpha="0.3"
-    app:srcCompat="@drawable/example" />
+    app:srcCompat="@drawable/default_album" />
 
     <ImageView
         android:id="@+id/imageView"
@@ -24,7 +24,7 @@
         android:paddingTop="25dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/example"
+        app:srcCompat="@drawable/default_album"
         android:maxHeight="320dp"
         />
 

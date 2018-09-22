@@ -130,6 +130,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadSavedLists();
         getCurrentPaper(); //Populate screen with current system wallpaper
     }
+    //Saved state handlers for rotation
+    @Override
+    protected void onSaveInstanceState(final Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // Save the state
+        // All global variables need saving
+
+        outState.putInt(Constants.STATE_POSITION, position);
+        outState.putInt(Constants.STATE_FAVPOSITION, favPosition);
+        outState.putInt(Constants.STATE_BLPOSITION, blPosition);
+        outState.putInt(Constants.STATE_HELDPOS, heldPosition);
+        outState.putInt(Constants.STATE_HELDFAVPOS, heldFavPosition);
+        outState.putInt(Constants.STATE_HELDBLPOS, heldBlPosition);
+        outState.putBoolean(Constants.STATE_ONLYFAV, onlyFavourites);
+        outState.putBoolean(Constants.STATE_ONLYBL, onlyBlacklist);
+        outState.putString(Constants.STATE_CURRENTPATH, currentPath);
+        outState.putString(Constants.STATE_CURRENTALBUM, currentAlbum);
+        outState.putString(Constants.STATE_CURRENTARTIST, currentArtist);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // Read the state
+        position = savedInstanceState.getInt(Constants.STATE_POSITION);
+        favPosition = savedInstanceState.getInt(Constants.STATE_FAVPOSITION);
+        blPosition = savedInstanceState.getInt(Constants.STATE_BLPOSITION);
+        heldPosition = savedInstanceState.getInt(Constants.STATE_HELDPOS);
+        heldFavPosition = savedInstanceState.getInt(Constants.STATE_HELDFAVPOS);
+        heldBlPosition = savedInstanceState.getInt(Constants.STATE_HELDBLPOS);
+        onlyFavourites = savedInstanceState.getBoolean(Constants.STATE_ONLYFAV);
+        onlyBlacklist = savedInstanceState.getBoolean(Constants.STATE_ONLYBL);
+        currentPath = savedInstanceState.getString(Constants.STATE_CURRENTPATH);
+        currentAlbum = savedInstanceState.getString(Constants.STATE_CURRENTALBUM);
+        currentArtist = savedInstanceState.getString(Constants.STATE_CURRENTARTIST);
+
+        //If displaying favourites or blacklist then set the icons..
+        if(onlyFavourites){
+            //Show header indicating we are displaying favourites
+            mTxtHeader.setVisibility(View.VISIBLE);
+            mTxtHeader.setBackgroundColor(getColor(R.color.colorFavHeader));
+            mTxtHeader.setTextColor(getColor(R.color.colorFavText));
+            mTxtHeader.setText(R.string.favourites);
+            favPosition+=1;
+        }
+        else if(onlyBlacklist){
+            //Show header indicating we are displaying blacklist
+            mTxtHeader.setVisibility(View.VISIBLE);
+            mTxtHeader.setBackgroundColor(getColor(R.color.colorBlacklistHeader));
+            mTxtHeader.setTextColor(getColor(R.color.colorBlacklistText));
+            mTxtHeader.setText(R.string.blacklist);
+            blPosition+=1;
+        }
+        else {
+            position+=1;
+        }
+        setImage(prev); //Restore previous image
+    }
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == FOLDERPICKER_CODE && resultCode == Activity.RESULT_OK) {
@@ -150,6 +212,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final MenuItem menuItemFavorites = menu.findItem(R.id.action_favourites);
         final MenuItem menuItemBlacklist = menu.findItem(R.id.action_blacklist);
         final MenuItem menuItemRefresh = menu.findItem(R.id.action_refresh);
+        //If favourites or blacklist already selected then highlight icons
+        if(onlyFavourites){
+            menu.findItem(R.id.action_favourites).setIcon(R.drawable.baseline_favorite_black_24);
+        }
+        else if(onlyBlacklist) {
+            menu.findItem(R.id.action_blacklist).setIcon(R.drawable.baseline_thumb_down_black_24);
+        }
         searchView.setOnSearchClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -265,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         heldPosition = position; //Store current position
                         onlyFavourites = true;
                         onlyBlacklist = false; //Can't activate both at once
-                        menu.findItem(R.id.action_favourites).setIcon(R.drawable.baseline_thumb_down_white_24);
+                        menu.findItem(R.id.action_blacklist).setIcon(R.drawable.baseline_thumb_down_white_24);
 
                         //Show header indicating we are displaying favourites
                         mTxtHeader.setVisibility(View.VISIBLE);
@@ -576,8 +645,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     //No image found - display default
-                    mImageView.setImageResource(R.drawable.example);
-                    mImageViewBackground.setImageResource(R.drawable.example);
+                    mImageView.setImageResource(R.drawable.default_album);
+                    mImageViewBackground.setImageResource(R.drawable.default_album);
                 }
                 //Ensure Favourite and Blacklist buttons are available
                 //If the image is a favourite then icon should change to indicate this, otherwise should allow to add as favourite
@@ -720,12 +789,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public static Bitmap resizeBitmap(RenderScript rs, Bitmap src, int dstWidth) {
-        //TODO - see if resizeBitmap can be changed to centre image if not exactly square
         Bitmap.Config  bitmapConfig = src.getConfig();
         int srcWidth = src.getWidth();
         int srcHeight = src.getHeight();
-        float srcAspectRatio = (float) srcWidth / srcHeight;
-        int dstHeight = (int) (dstWidth / srcAspectRatio);
+        int dstHeight = dstWidth; // We want square images to set Height equal to width
 
         float resizeRatio=1; //We always want squares in this app.
 
@@ -867,7 +934,3 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 }
-
-//TODO - Landscape orientation - constraint
-//TODO - Default image
-//TODO - App icon

@@ -9,6 +9,15 @@ public class Constants {
         public static final String ALBUMS_FILENAME="albumList.list";
         public static final String FAVOURITES_FILENAME="favouritesList.list";
         public static final String BLACKLIST_FILENAME="blacklistList.list";
-        public static final int REQUEST_DIRECTORY=1;
-        //public static final String PREFERENCES_STARTFOLDER="/storage/C219-D78B/Music/";
+        public static final String STATE_POSITION="state_position";
+        public static final String STATE_FAVPOSITION="state_favposition";
+        public static final String STATE_BLPOSITION="state_blposition";
+        public static final String STATE_HELDPOS="state_heldpos";
+        public static final String STATE_HELDFAVPOS="state_heldfavpos";
+        public static final String STATE_HELDBLPOS="state_heldblpos";
+        public static final String STATE_ONLYFAV="state_onlyfav";
+        public static final String STATE_ONLYBL="state_onlybl";
+        public static final String STATE_CURRENTPATH="state_currentPath";
+        public static final String STATE_CURRENTALBUM="state_currentAlbum";
+        public static final String STATE_CURRENTARTIST="state_currentArtist";
 }
