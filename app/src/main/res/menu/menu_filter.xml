@@ -20,6 +20,12 @@
         android:title="Blacklist">
     </item>
     <item
+        android:id="@+id/action_timer"
+        android:icon="@drawable/baseline_timer_24"
+        app:showAsAction="always"
+        android:title="Refresh">
+    </item>
+    <item
         android:id="@+id/action_refresh"
         android:icon="@drawable/baseline_refresh_24"
         app:showAsAction="always"

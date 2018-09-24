@@ -24,6 +24,7 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
 import android.renderscript.ScriptIntrinsicResize;
 import android.renderscript.Type;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -107,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String currentArtist="";
     boolean inSearch=false;
     boolean searchActive=false;
+    boolean timerActive;
     int FOLDERPICKER_CODE=1;
     String startFolder="";
 
@@ -120,6 +122,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         mEditor=mSharedPreferences.edit();
 
+        timerActive = mSharedPreferences.getBoolean(Constants.PREFERENCES_TIMERACTIVE,false);
+
         /* Set onClick listeners */
         mBtnSetWallpaper.setOnClickListener(this);
         mBtnPrev.setOnClickListener(this);
@@ -130,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadSavedLists();
         getCurrentPaper(); //Populate screen with current system wallpaper
     }
+
     //Saved state handlers for rotation
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
@@ -149,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         outState.putString(Constants.STATE_CURRENTPATH, currentPath);
         outState.putString(Constants.STATE_CURRENTALBUM, currentAlbum);
         outState.putString(Constants.STATE_CURRENTARTIST, currentArtist);
+        outState.putBoolean(Constants.STATE_TIMERACTIVE, timerActive);
     }
 
     @Override
@@ -167,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentPath = savedInstanceState.getString(Constants.STATE_CURRENTPATH);
         currentAlbum = savedInstanceState.getString(Constants.STATE_CURRENTALBUM);
         currentArtist = savedInstanceState.getString(Constants.STATE_CURRENTARTIST);
+        timerActive = savedInstanceState.getBoolean(Constants.STATE_TIMERACTIVE);
 
         //If displaying favourites or blacklist then set the icons..
         if(onlyFavourites){
@@ -211,7 +218,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SearchView searchView = (SearchView) menuItemFilter.getActionView();
         final MenuItem menuItemFavorites = menu.findItem(R.id.action_favourites);
         final MenuItem menuItemBlacklist = menu.findItem(R.id.action_blacklist);
+        final MenuItem menuItemTimer= menu.findItem(R.id.action_timer);
         final MenuItem menuItemRefresh = menu.findItem(R.id.action_refresh);
+        //If timer active then change timer icon appropriately.
+        if(timerActive){
+            menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_off_24);
+        }
+        else{
+            menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_24);
+        }
+
         //If favourites or blacklist already selected then highlight icons
         if(onlyFavourites){
             menu.findItem(R.id.action_favourites).setIcon(R.drawable.baseline_favorite_black_24);
@@ -225,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 searchActive = true;
                 menuItemFavorites.setVisible(false);
                 menuItemBlacklist.setVisible(false);
+                menuItemTimer.setVisible(false);
                 menuItemRefresh.setVisible(false);
             }
         });
@@ -310,6 +327,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item) {
         //MenuItem menuItemFavorites = menu.findItem(R.id.action_favourites);
         int id = item.getItemId();
+        //Set or disable timer
+        if (id == R.id.action_timer) {
+            if(timerActive){
+                menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_24);
+                timerActive=false;
+                //Store in shared preferences
+                mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
+            }
+            else{
+                menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_off_24);
+                timerActive=true;
+                //Store in shared preferences
+                mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
+            }
+        }
         if (id == R.id.action_favourites) {
             if(!searchActive) {
                 if (onlyFavourites) {
@@ -934,3 +966,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 }
+
+//TODO - Automatically change wallpaper on a schedule - e.g. every 24 hours
+//TODO - Handle rotate screen while in search mode

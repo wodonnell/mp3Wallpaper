@@ -6,6 +6,7 @@ public class Constants {
         public static final String PREFERENCES_LASTALBUM="album";
         public static final String PREFERENCES_LASTARTIST="artist";
         public static final String PREFERENCES_STARTFOLDER="startfolder";
+        public static final String PREFERENCES_TIMERACTIVE="timerActive";
         public static final String ALBUMS_FILENAME="albumList.list";
         public static final String FAVOURITES_FILENAME="favouritesList.list";
         public static final String BLACKLIST_FILENAME="blacklistList.list";
@@ -20,4 +21,5 @@ public class Constants {
         public static final String STATE_CURRENTPATH="state_currentPath";
         public static final String STATE_CURRENTALBUM="state_currentAlbum";
         public static final String STATE_CURRENTARTIST="state_currentArtist";
+        public static final String STATE_TIMERACTIVE="state_timerActive";
 }

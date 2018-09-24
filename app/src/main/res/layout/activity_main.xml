@@ -1,93 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView android:id="@+id/imageViewBackground"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_alignParentEnd="true"
-    android:layout_alignParentTop="true"
-    android:contentDescription="@string/app_name"
-    android:scaleType="centerCrop"
-    android:alpha="0.3"
-    app:srcCompat="@drawable/default_album" />
+    <ImageView
+        android:id="@+id/imageViewBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:alpha="0.3"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/default_album" />
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_alignParentStart="true"
-        android:paddingEnd="40dp"
-        android:paddingStart="40dp"
-        android:paddingTop="25dp"
         android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        app:srcCompat="@drawable/default_album"
         android:maxHeight="320dp"
-        />
-
+        android:paddingTop="20dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/default_album" />
 
 
     <LinearLayout
         android:id="@+id/PrevNext"
-        android:layout_alignParentBottom="true"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
             android:id="@+id/btnPrev"
-            android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_background"
             android:padding="10dp"
+            android:src="@drawable/baseline_fast_rewind_white_24"
             android:text="@string/prev"
             android:textColor="@color/colorTextIcons"
-            android:background="@drawable/button_background"
-            android:src="@drawable/baseline_fast_rewind_white_24"
             android:visibility="visible" />
+
         <ImageButton
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Collage"
             android:id="@+id/btnCollage"
-            android:background="@drawable/button_background"
-            android:textColor="@color/colorTextIcons"
-            android:visibility="visible"
-            android:src="@drawable/baseline_grid_on_white_24"
-            android:layout_margin="10dp"
-            android:padding="10dp"/>
-        <ImageButton
-            android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/set_Wallpaper"
-            android:id="@+id/btnSetWallpaper"
-            android:background="@drawable/button_background"
-            android:textColor="@color/colorTextIcons"
-            android:src="@drawable/baseline_get_app_white_24"
-            android:visibility="visible"
             android:layout_margin="10dp"
-            android:padding="10dp" />
+            android:layout_weight="1"
+            android:background="@drawable/button_background"
+            android:padding="10dp"
+            android:src="@drawable/baseline_grid_on_white_24"
+            android:text="Collage"
+            android:textColor="@color/colorTextIcons"
+            android:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/btnSetWallpaper"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_background"
+            android:padding="10dp"
+            android:src="@drawable/baseline_get_app_white_24"
+            android:text="@string/set_Wallpaper"
+            android:textColor="@color/colorTextIcons"
+            android:visibility="visible" />
+
         <ImageButton
             android:id="@+id/btnNext"
-            android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_background"
             android:padding="10dp"
+            android:src="@drawable/baseline_fast_forward_white_24"
             android:text="@string/next"
             android:textColor="@color/colorTextIcons"
-            android:background="@drawable/button_background"
-            android:src="@drawable/baseline_fast_forward_white_24"
             android:visibility="visible" />
     </LinearLayout>
 
@@ -97,14 +106,16 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/imageView"
-        android:background="@drawable/button_background"
-        android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/button_background"
         android:gravity="center_horizontal"
+        android:padding="10dp"
         android:text="-- Artist --"
-        android:padding="10dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guideline2" />
 
     <TextView
         android:id="@+id/txtAlbum"
@@ -112,42 +123,46 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/txtArtist"
-        android:background="@drawable/button_background"
-        android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/button_background"
         android:gravity="center_horizontal"
+        android:padding="10dp"
         android:text="-- Album --"
-        android:padding="10dp"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtArtist" />
 
     <ImageButton
         android:id="@+id/btnFavourite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="30dp"
-        android:padding="10dp"
         android:layout_alignParentStart="true"
+        android:layout_marginStart="70dp"
+        android:layout_marginTop="30dp"
         android:background="@drawable/button_background"
-        android:textColor="@color/colorTextIcons"
+        android:padding="10dp"
         android:src="@drawable/baseline_favorite_white_24"
-        android:visibility="visible" />
+        android:textColor="@color/colorTextIcons"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ImageButton
         android:id="@+id/btnBlacklist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginRight="50dp"
-        android:layout_marginEnd="50dp"
-        android:padding="10dp"
         android:layout_alignParentEnd="true"
+        android:layout_marginEnd="70dp"
+        android:layout_marginTop="30dp"
         android:background="@drawable/button_background"
-        android:textColor="@color/colorTextIcons"
+        android:padding="10dp"
         android:src="@drawable/baseline_thumb_down_white_24"
-        android:visibility="visible" />
-
+        android:textColor="@color/colorTextIcons"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="parent" />
     <TextView
         android:id="@+id/txtHeader"
         android:layout_width="match_parent"
@@ -161,4 +176,11 @@
         android:textColor="@color/colorTextIcons"
         android:text="TextView" />
 
-</RelativeLayout>
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.53" />
+
+</android.support.constraint.ConstraintLayout>
