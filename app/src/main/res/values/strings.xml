@@ -7,4 +7,6 @@
     <string name="favourites">Showing favourites</string>
     <string name="blacklist">Showing blacklist</string>
     <string name="listRefreshed">List refreshed</string>
+    <string name="updatesOn">Daily updates on</string>
+    <string name="updatesOff">Daily updates off</string>
 </resources>

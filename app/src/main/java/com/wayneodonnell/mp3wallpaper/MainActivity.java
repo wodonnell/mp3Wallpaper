@@ -2,8 +2,13 @@ package com.wayneodonnell.mp3wallpaper;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.FragmentManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.WallpaperManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,6 +22,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.icu.text.UnicodeSetSpanner;
 import android.media.MediaMetadataRetriever;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.renderscript.Allocation;
@@ -57,6 +63,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -111,13 +118,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     boolean timerActive;
     int FOLDERPICKER_CODE=1;
     String startFolder="";
+    String queryText="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
         // set up shared preferences
         mSharedPreferences= PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         mEditor=mSharedPreferences.edit();
@@ -155,6 +162,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         outState.putString(Constants.STATE_CURRENTALBUM, currentAlbum);
         outState.putString(Constants.STATE_CURRENTARTIST, currentArtist);
         outState.putBoolean(Constants.STATE_TIMERACTIVE, timerActive);
+        outState.putBoolean(Constants.STATE_SEARCHACTIVE, searchActive);
+        outState.putString(Constants.STATE_QUERYTEXT, queryText);
     }
 
     @Override
@@ -174,6 +183,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentAlbum = savedInstanceState.getString(Constants.STATE_CURRENTALBUM);
         currentArtist = savedInstanceState.getString(Constants.STATE_CURRENTARTIST);
         timerActive = savedInstanceState.getBoolean(Constants.STATE_TIMERACTIVE);
+        searchActive = savedInstanceState.getBoolean(Constants.STATE_SEARCHACTIVE);
+        queryText = savedInstanceState.getString(Constants.STATE_QUERYTEXT);
 
         //If displaying favourites or blacklist then set the icons..
         if(onlyFavourites){
@@ -215,11 +226,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ButterKnife.bind(this);
         this.menu=menu;
         MenuItem menuItemFilter = menu.findItem(R.id.action_filter);
-        SearchView searchView = (SearchView) menuItemFilter.getActionView();
+        final SearchView searchView = (SearchView) menuItemFilter.getActionView();
         final MenuItem menuItemFavorites = menu.findItem(R.id.action_favourites);
         final MenuItem menuItemBlacklist = menu.findItem(R.id.action_blacklist);
         final MenuItem menuItemTimer= menu.findItem(R.id.action_timer);
         final MenuItem menuItemRefresh = menu.findItem(R.id.action_refresh);
+
+        if(searchActive == true){
+            menuItemFavorites.setVisible(false);
+            menuItemBlacklist.setVisible(false);
+            menuItemTimer.setVisible(false);
+            menuItemRefresh.setVisible(false);
+            searchView.setQuery(queryText,false);
+            int ps=position;
+            doQuery(queryText);
+            position=ps+1;
+            setImage(prev);
+        }
+
         //If timer active then change timer icon appropriately.
         if(timerActive){
             menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_off_24);
@@ -238,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchView.setOnSearchClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                queryText="";
                 searchActive = true;
                 menuItemFavorites.setVisible(false);
                 menuItemBlacklist.setVisible(false);
@@ -251,32 +276,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-                if(onlyFavourites) {
-                    if(heldFavPosition==-99) {
-                        heldFavPosition = favPosition; //Store current position
-                    }
-                }
-                else if(onlyBlacklist){
-                    if(heldBlPosition==-99) {
-                        heldBlPosition = blPosition; //Store current position
-                    }
-                }
-                else {
-                    if(heldPosition==-99) {
-                        heldPosition = position; //Store current position
-                    }
-                }
-                getFilterList(query);
-
-                if(mFilterList.size()==0){
-                    Toast.makeText(MainActivity.this,"Nothing found for '"+query+"'",Toast.LENGTH_SHORT).show();
-                }
+                queryText=searchView.getQuery().toString();
+                doQuery(query);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 searchActive=true;
+                queryText=newText;
                 return false;
             }
 
@@ -334,12 +342,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 timerActive=false;
                 //Store in shared preferences
                 mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
+                stopTimer();
             }
             else{
                 menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_off_24);
                 timerActive=true;
                 //Store in shared preferences
                 mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
+                startTimer();
             }
         }
         if (id == R.id.action_favourites) {
@@ -552,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
     public void getFileList() {
-        //TODO - Add loading spinner - currently struggling to get this to show
+        //TODO - Add loading spinner - currently struggling to get this to show - https://en.proft.me/2016/07/25/displaying-progress-dialog-android/
         //Before accessing files, need to check permission granted
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             // If permission is not granted need to request permission
@@ -913,7 +923,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 e.printStackTrace();
             }
         }
-        //Retrieve favourites
+        //Retrieve blacklist
         String blacklistFileString=readFile(Constants.BLACKLIST_FILENAME);
         if(!blacklistFileString.equals("ERROR")) {
             //Convert string to JSONArray
@@ -964,8 +974,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return "ERROR";
     }
+    public void startTimer(){
+        //Start the service
+        Calendar cur_cal = Calendar.getInstance();
+        cur_cal.setTimeInMillis(System.currentTimeMillis());
+        cur_cal.set(Calendar.HOUR_OF_DAY, 23); // Set to 23:59 today then add one minute for midnight
+        cur_cal.set(Calendar.MINUTE, 59);
+        cur_cal.set(Calendar.SECOND, 00);
+        cur_cal.add(Calendar.SECOND, 60);
+        //cur_cal.add(Calendar.SECOND, 1); //Start straight away
 
+        AlarmManager alarm_manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+
+        //Start at midnight and repeat every 24 hours
+        alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY, pi); //Repeat every day
+        //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi); //Repeat every 15 minutes
+
+        ComponentName receiver = new ComponentName(MainActivity.this, AlarmReceiver.class);
+        PackageManager pm = this.getPackageManager();
+
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
+
+
+        Toast.makeText(this, R.string.updatesOn, Toast.LENGTH_LONG).show();
+    }
+
+    public void stopTimer() {
+        Intent intent = new Intent(MainActivity.this, ServiceClass.class);
+        PendingIntent pi = PendingIntent.getService(MainActivity.this, 0, intent, 0);
+        AlarmManager alarm_manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        alarm_manager.cancel(pi);
+        pi.cancel();
+
+        ComponentName receiver = new ComponentName(MainActivity.this, AlarmReceiver.class);
+        PackageManager pm = this.getPackageManager();
+
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+
+        Toast.makeText(this, R.string.updatesOff, Toast.LENGTH_LONG).show();
+    }
+    public void doQuery(String query){
+        if(onlyFavourites) {
+            if(heldFavPosition==-99) {
+                heldFavPosition = favPosition; //Store current position
+            }
+        }
+        else if(onlyBlacklist){
+            if(heldBlPosition==-99) {
+                heldBlPosition = blPosition; //Store current position
+            }
+        }
+        else {
+            if(heldPosition==-99) {
+                heldPosition = position; //Store current position
+            }
+        }
+        getFilterList(query);
+        if(mFilterList.size()==0){
+            Toast.makeText(MainActivity.this,"Nothing found for '"+query+"'",Toast.LENGTH_SHORT).show();
+        }
+    }
 }
-
-//TODO - Automatically change wallpaper on a schedule - e.g. every 24 hours
-//TODO - Handle rotate screen while in search mode

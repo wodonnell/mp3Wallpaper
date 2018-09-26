@@ -3,6 +3,8 @@
     package="com.wayneodonnell.mp3wallpaper">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -17,6 +19,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name="com.wayneodonnell.mp3wallpaper.ServiceClass"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:label="@string/app_name"
+            >
+        </service>
+        <receiver android:name="com.wayneodonnell.mp3wallpaper.AlarmReceiver" />
+        <receiver android:name="com.wayneodonnell.mp3wallpaper.BootReceiver"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

@@ -23,7 +23,7 @@
         android:id="@+id/action_timer"
         android:icon="@drawable/baseline_timer_24"
         app:showAsAction="always"
-        android:title="Refresh">
+        android:title="Daily change">
     </item>
     <item
         android:id="@+id/action_refresh"

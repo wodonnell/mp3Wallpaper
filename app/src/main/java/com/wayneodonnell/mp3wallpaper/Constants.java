@@ -22,4 +22,6 @@ public class Constants {
         public static final String STATE_CURRENTALBUM="state_currentAlbum";
         public static final String STATE_CURRENTARTIST="state_currentArtist";
         public static final String STATE_TIMERACTIVE="state_timerActive";
+        public static final String STATE_SEARCHACTIVE="state_searchActive";
+        public static final String STATE_QUERYTEXT="state_queryText";
 }
