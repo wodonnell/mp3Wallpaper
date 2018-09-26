@@ -7,6 +7,7 @@ import android.app.FragmentManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,6 +23,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.icu.text.UnicodeSetSpanner;
 import android.media.MediaMetadataRetriever;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -36,6 +38,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telecom.Call;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -91,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
+    private ProgressDialog mDialog;
 
     private Menu menu;
 
@@ -561,48 +565,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             builder.show();
         }
     }
-    public void getFileList() {
-        //TODO - Add loading spinner - currently struggling to get this to show - https://en.proft.me/2016/07/25/displaying-progress-dialog-android/
-        //Before accessing files, need to check permission granted
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            // If permission is not granted need to request permission
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-        }
 
-        //Retrieve startfolder from shared preferences
-        startFolder = mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER, null);
-        if(!TextUtils.isEmpty(startFolder)){
-
-            List<File> files = getListFiles(new File(startFolder));
-
-            //Add each file, add name to the list
-            String albumPath;
-            String songPath;
-            mAlbumList.clear();
-            mFileList.clear();
-            mFilterList.clear();
-            for (File file : files) {
-                //Only add if the album hasn't already been added and album isn't on blacklist
-                songPath = file.toString();
-                albumPath = songPath.substring(0, songPath.lastIndexOf("/"));
-                if (!mAlbumList.contains(albumPath)) {
-                    mAlbumList.add(albumPath);
-                    mFileList.add(file.toString());
-                }
-            }
-            //Collections.shuffle(mFileList,new Random());
-            //Sort the list into order
-            Collections.sort(mFileList);
-            //Save the list to a file
-            saveFile(Constants.ALBUMS_FILENAME, mFileList);
-            Toast.makeText(MainActivity.this, R.string.listRefreshed, Toast.LENGTH_SHORT).show();
-        }
-        else {
-            setStartFolder();
-        }
-    }
     public void setStartFolder(){
         //String startFolder="/storage/C219-D78B/Music/";
         Intent intent = new Intent(MainActivity.this, FolderPicker.class);
@@ -1041,4 +1004,87 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(MainActivity.this,"Nothing found for '"+query+"'",Toast.LENGTH_SHORT).show();
         }
     }
+
+    public void getFileList() {
+        //Before accessing files, need to check permission granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // If permission is not granted need to request permission
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    Constants.PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+        }
+
+        //Retrieve startfolder from shared preferences
+        startFolder = mSharedPreferences.getString(Constants.PREFERENCES_STARTFOLDER, null);
+        if(!TextUtils.isEmpty(startFolder)){
+            //Call as Asynctask
+            generateFileList genFileList = new generateFileList(this);
+            genFileList.execute(startFolder);
+        }
+        else {
+            setStartFolder();
+        }
+    }
+
+    private class generateFileList extends AsyncTask<String, Integer, String> {
+        private Context ctx;
+
+        public generateFileList (Context context){
+            ctx = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mDialog = new ProgressDialog(ctx);
+            mDialog.setMessage("Processing...");
+            mDialog.setCancelable(false);
+            //mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strtFolder) {
+            try {
+
+                List<File> files = getListFiles(new File(startFolder));
+
+                //Add each file, add name to the list
+                String albumPath;
+                String songPath;
+                mAlbumList.clear();
+                mFileList.clear();
+                mFilterList.clear();
+                for (File file : files) {
+                    //Only add if the album hasn't already been added and album isn't on blacklist
+                    songPath = file.toString();
+                    albumPath = songPath.substring(0, songPath.lastIndexOf("/"));
+                    if (!mAlbumList.contains(albumPath)) {
+                        mAlbumList.add(albumPath);
+                        mFileList.add(file.toString());
+                    }
+                }
+                //Collections.shuffle(mFileList,new Random());
+                //Sort the list into order
+                Collections.sort(mFileList);
+                //Save the list to a file
+                saveFile(Constants.ALBUMS_FILENAME, mFileList);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+            mDialog.setProgress(progress[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            mDialog.dismiss();
+            Toast.makeText(MainActivity.this, R.string.listRefreshed, Toast.LENGTH_LONG).show();
+        }
+    }
+
 }
+
