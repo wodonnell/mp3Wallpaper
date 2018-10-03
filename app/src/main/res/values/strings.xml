@@ -9,4 +9,5 @@
     <string name="listRefreshed">List refreshed</string>
     <string name="updatesOn">Daily updates on</string>
     <string name="updatesOff">Daily updates off</string>
+    <string name="daily_updates">Daily updates enabled.</string>
 </resources>

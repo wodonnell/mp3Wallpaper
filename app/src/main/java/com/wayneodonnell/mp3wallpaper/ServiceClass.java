@@ -85,7 +85,6 @@ public class ServiceClass extends Service{
             setPaper(bm);
 
             String notification="Wallpaper set to "+currentAlbum+" by "+currentArtist;
-            Log.d("WOD-ALBUM",song.getAlbumTitle());
             buildNotification(notification,bm);
         }
         return Service.START_NOT_STICKY;  //START_STICKY to restart if stopped
@@ -130,7 +129,7 @@ public class ServiceClass extends Service{
                 .setStyle(style);
                 //.setSubText(notificationMsg);
 
-        notificationManager.notify(1, notification.build());
+        notificationManager.notify(2, notification.build());
     }
 
     private List<File> getListFiles(File parentDir) {

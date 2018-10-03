@@ -34,6 +34,7 @@ import android.renderscript.ScriptIntrinsicResize;
 import android.renderscript.Type;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -97,6 +98,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ProgressDialog mDialog;
 
     private Menu menu;
+
+    private final static String APP_PACKAGE = "com.wayneodonnell.mp3wallpaper";
+    private final static String CHANNEL_ID = APP_PACKAGE + ".NOTIFICATIONS";
+    NotificationManager notificationManager;
+    NotificationChannel channel;
 
     ArrayList<String> mFileList=new ArrayList<String>();
     ArrayList<String> mAlbumList=new ArrayList<String>();
@@ -341,9 +347,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = item.getItemId();
         //Set or disable timer
         if (id == R.id.action_timer) {
+            notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if(timerActive){
                 menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_24);
                 timerActive=false;
+                notificationManager.cancel(1);
                 //Store in shared preferences
                 mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
                 stopTimer();
@@ -351,6 +359,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             else{
                 menu.findItem(R.id.action_timer).setIcon(R.drawable.baseline_timer_off_24);
                 timerActive=true;
+
+                //Show notification advising daily updates turned on
+                notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    channel = new NotificationChannel(
+                            CHANNEL_ID,
+                            "mp3Wallpaper",
+                            NotificationManager.IMPORTANCE_DEFAULT);
+                    channel.setDescription("mp3Wallpaper notifications");
+                }
+
+                PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, new Intent(this.getApplicationContext(), MainActivity.class), 0);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                    contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0,
+                            new Intent(this.getApplicationContext(), MainActivity.class).putExtra("importance",
+                                    channel.getImportance()).putExtra("channel_id", ""), PendingIntent.FLAG_UPDATE_CURRENT);
+                }
+
+                NotificationCompat.Builder notification = new NotificationCompat.Builder(this.getApplicationContext(), CHANNEL_ID)
+                        .setContentTitle("mp3Wallpaper")
+                        .setContentText(getString(R.string.daily_updates))
+                        .setOngoing(true)
+                        .setGroup("mp3Wallpaper")
+                        .setContentIntent(contentIntent)
+                        .setSmallIcon(R.drawable.baseline_music_note_24);
+                //.setSubText(notificationMsg);
+
+                notificationManager.notify(1, notification.build());
+
                 //Store in shared preferences
                 mEditor.putBoolean(Constants.PREFERENCES_TIMERACTIVE,timerActive).apply();
                 startTimer();
@@ -963,6 +1003,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP);
 
+        /////////////////////////
+
+        //Set the alarm
+        /////////////////////
+
 
         Toast.makeText(this, R.string.updatesOn, Toast.LENGTH_LONG).show();
     }
@@ -1088,3 +1133,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 }
 
+//TODO - Maybe change the icon
