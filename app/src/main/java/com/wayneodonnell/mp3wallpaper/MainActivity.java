@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.imageView) ImageView mImageView;
     @BindView(R.id.imageViewBackground) ImageView mImageViewBackground;
     @BindView(R.id.btnCollage)  ImageButton mBtnCollage;
+    @BindView(R.id.btnRandom)  ImageButton mBtnRandom;
     @BindView(R.id.txtAlbum)     TextView mTxtAlbum;
     @BindView(R.id.txtArtist)     TextView mTxtArtist;
     @BindView(R.id.btnFavourite)     ImageButton mBtnFavourite;
@@ -146,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnPrev.setOnClickListener(this);
         mBtnNext.setOnClickListener(this);
         mBtnCollage.setOnClickListener(this);
+        mBtnRandom.setOnClickListener(this);
         mBtnFavourite.setOnClickListener(this);
         mBtnBlacklist.setOnClickListener(this);
         loadSavedLists();
@@ -494,6 +496,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         {
             mImageView.setImageBitmap(createCollage());
             mImageViewBackground.setImageDrawable(mImageView.getDrawable());
+        }
+
+        if(v==mBtnRandom)
+        {
+            Random rand = new Random();
+            //Determine which list to use for random image
+            if (mFilterList.size() > 0){
+                //Get next from mFilterList
+                position=rand.nextInt(mFilterList.size() - 1);
+            }
+            //If only looking at favourites
+            else if(onlyFavourites){
+                //Get next from mFavouriteList
+                favPosition=rand.nextInt(mFavouriteList.size() - 1);
+            }
+            //If only looking at blacklist
+            else if(onlyBlacklist){
+                //Get next from mFavouriteList
+                //blPosition=setFile(mBlacklist,blPosition,direction);
+                blPosition=rand.nextInt(mBlacklist.size() - 1);
+            }
+            //Otherwise use the main file list
+            else if(mFileList.size()>1){
+                //Get next from mFileList
+                position = rand.nextInt(mFileList.size() - 1);
+            }
+
+            setImage(next);
+            //Ensure buttons are visible in case they were removed by collage
+            mBtnFavourite.setVisibility(View.VISIBLE);
+            mBtnBlacklist.setVisibility(View.VISIBLE);
         }
 
         if(v==mBtnNext){
@@ -1134,3 +1167,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 }
 
 //TODO - Maybe change the icon
+//TODO - allow selection of automatic frequency

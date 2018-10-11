@@ -85,6 +85,19 @@
             android:visibility="visible" />
 
         <ImageButton
+            android:id="@+id/btnRandom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_background"
+            android:padding="10dp"
+            android:src="@drawable/baseline_shuffle_white_24"
+            android:text="Random"
+            android:textColor="@color/colorTextIcons"
+            android:visibility="visible" />
+
+        <ImageButton
             android:id="@+id/btnSetWallpaper"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
