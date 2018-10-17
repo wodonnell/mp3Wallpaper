@@ -24,4 +24,8 @@ public class Constants {
         public static final String STATE_TIMERACTIVE="state_timerActive";
         public static final String STATE_SEARCHACTIVE="state_searchActive";
         public static final String STATE_QUERYTEXT="state_queryText";
+        public static final int RANDOM_FILE=0;
+        public static final int RANDOM_FILTER=1;
+        public static final int RANDOM_FAVOURITE=2;
+        public static final int RANDOM_BLACKLIST=3;
 }

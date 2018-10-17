@@ -97,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
     private ProgressDialog mDialog;
-
     private Menu menu;
 
     private final static String APP_PACKAGE = "com.wayneodonnell.mp3wallpaper";
@@ -110,6 +109,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<String> mBlacklist=new ArrayList<String>();
     ArrayList<String> mFilterList=new ArrayList<String>();
     ArrayList<String> mFavouriteList=new ArrayList<String>();
+    ArrayList<Integer> mRandomFileArray=new ArrayList<Integer>();
+    ArrayList<Integer> mRandomFilterArray=new ArrayList<Integer>();
+    ArrayList<Integer> mRandomFavouriteArray=new ArrayList<Integer>();
+    ArrayList<Integer> mRandomBlacklistArray=new ArrayList<Integer>();
 
     int position=-99; //Start as -99 as this will never be reached again in code
     int favPosition=-1;
@@ -503,24 +506,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Random rand = new Random();
             //Determine which list to use for random image
             if (mFilterList.size() > 0){
-                //Get next from mFilterList
-                position=rand.nextInt(mFilterList.size() - 1);
+                // Get the next entry from the randomArray
+                int random=position;
+                while(random==position){
+                    if(mRandomFilterArray.size()==0) {
+                        setLimits(Constants.RANDOM_FILTER);
+                    }
+                    random = mRandomFilterArray.get(0); //Always get the first entry
+                    mRandomFilterArray.remove(0); //Remove the first entry
+                }
+                position=random;
             }
             //If only looking at favourites
             else if(onlyFavourites){
-                //Get next from mFavouriteList
-                favPosition=rand.nextInt(mFavouriteList.size() - 1);
+                // Get the next entry from the randomArray
+                int random=favPosition;
+                while(random==favPosition){
+                    if(mRandomFavouriteArray.size()==0) {
+                        setLimits(Constants.RANDOM_FAVOURITE);
+                    }
+                    random = mRandomFavouriteArray.get(0); //Always get the first entry
+                    mRandomFavouriteArray.remove(0); //Remove the first entry
+                }
+                favPosition=random;
             }
             //If only looking at blacklist
             else if(onlyBlacklist){
-                //Get next from mFavouriteList
-                //blPosition=setFile(mBlacklist,blPosition,direction);
-                blPosition=rand.nextInt(mBlacklist.size() - 1);
+                // Get the next entry from the randomArray
+                int random=blPosition;
+                while(random==blPosition){
+                    if(mRandomBlacklistArray.size()==0) {
+                        setLimits(Constants.RANDOM_BLACKLIST);
+                    }
+                    random = mRandomBlacklistArray.get(0); //Always get the first entry
+                    mRandomBlacklistArray.remove(0); //Remove the first entry
+                }
+                blPosition=random;
             }
             //Otherwise use the main file list
             else if(mFileList.size()>1){
-                //Get next from mFileList
-                position = rand.nextInt(mFileList.size() - 1);
+                // Get the next entry from the randomArray
+                int random=position;
+                while(random==position){
+                    if(mRandomFileArray.size()==0) {
+                        setLimits(Constants.RANDOM_BLACKLIST);
+                    }
+                    random = mRandomFileArray.get(0); //Always get the first entry
+                    mRandomFileArray.remove(0); //Remove the first entry
+                }
+                position=random;
             }
 
             setImage(next);
@@ -552,6 +586,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mFavouriteList.add(currentPath);
                 mBtnFavourite.setImageResource(R.drawable.baseline_favorite_black_24);
             }
+            setLimits(Constants.RANDOM_FAVOURITE);
             Collections.sort(mFavouriteList);
             saveFile(Constants.FAVOURITES_FILENAME,mFavouriteList);
         }
@@ -566,6 +601,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mBlacklist.add(currentPath);
                 mBtnBlacklist.setImageResource(R.drawable.baseline_thumb_down_black_24);
             }
+            setLimits(Constants.RANDOM_BLACKLIST);
             Collections.sort(mBlacklist);
             saveFile(Constants.BLACKLIST_FILENAME,mBlacklist);
         }
@@ -607,6 +643,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             if (mFilterList.size() > 0) {
+                setLimits(Constants.RANDOM_FILTER);
                 //Refresh the list being used
                 position = -1;
                 setImage(next);
@@ -923,6 +960,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void loadSavedLists(){
         //Load saved lists - if main list not found then recreate and save
 
+        //Retrieve blacklist first so that entries can be excluded from further lists
+        String blacklistFileString=readFile(Constants.BLACKLIST_FILENAME);
+        if(!blacklistFileString.equals("ERROR")) {
+            //Convert string to JSONArray
+            try {
+                JSONArray jsonArray = new JSONArray(blacklistFileString);
+                //Populate ArrayList with JSONArray
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    mBlacklist.add(jsonArray.getString(i));
+                }
+
+                Collections.sort(mFavouriteList); //Ensure list is sorted
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         //Read album data
         String albumFileString=readFile(Constants.ALBUMS_FILENAME);
         if(!albumFileString.equals("ERROR")){
@@ -933,7 +986,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 for (int i = 0; i < jsonArray.length(); i++) {
                     mFileList.add(jsonArray.getString(i));
                 }
-
+                setLimits(Constants.RANDOM_FILE);
                 Collections.sort(mFileList); //Ensure list is sorted
             } catch (Exception e) {
                 e.printStackTrace();
@@ -952,22 +1005,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //Populate ArrayList with JSONArray
                 for (int i = 0; i < jsonArray.length(); i++) {
                     mFavouriteList.add(jsonArray.getString(i));
-                }
-
-                Collections.sort(mFavouriteList); //Ensure list is sorted
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        //Retrieve blacklist
-        String blacklistFileString=readFile(Constants.BLACKLIST_FILENAME);
-        if(!blacklistFileString.equals("ERROR")) {
-            //Convert string to JSONArray
-            try {
-                JSONArray jsonArray = new JSONArray(blacklistFileString);
-                //Populate ArrayList with JSONArray
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    mBlacklist.add(jsonArray.getString(i));
                 }
 
                 Collections.sort(mFavouriteList); //Ensure list is sorted
@@ -1144,6 +1181,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 //Collections.shuffle(mFileList,new Random());
                 //Sort the list into order
+                setLimits(Constants.RANDOM_FILE);
                 Collections.sort(mFileList);
                 //Save the list to a file
                 saveFile(Constants.ALBUMS_FILENAME, mFileList);
@@ -1164,6 +1202,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void setLimits(int mode) {
+        if(mode==Constants.RANDOM_FILE){
+            mRandomFileArray.clear();
+            for(int i=0;i<mFileList.size();i++){
+                //Exclude anything on blacklist
+                if(!mBlacklist.contains(mFileList.get(i))) {
+                    mRandomFileArray.add(i);
+                }
+            }
+            //Shuffle the array
+            Collections.shuffle(mRandomFileArray,new Random());
+        }
+        else if(mode==Constants.RANDOM_FILTER){
+            mRandomFilterArray.clear();
+            for(int i=0;i<mFilterList.size();i++){
+                mRandomFilterArray.add(i);
+            }
+            //Shuffle the array
+            Collections.shuffle(mRandomFilterArray,new Random());
+        }
+        else if(mode==Constants.RANDOM_FAVOURITE){
+            mRandomFavouriteArray.clear();
+            for(int i=0;i<mFavouriteList.size();i++){
+                mRandomFavouriteArray.add(i);
+            }
+            //Shuffle the array
+            Collections.shuffle(mRandomFavouriteArray,new Random());
+        }
+        else if(mode==Constants.RANDOM_BLACKLIST){
+            mRandomBlacklistArray.clear();
+            for(int i=0;i<mBlacklist.size();i++){
+                mRandomBlacklistArray.add(i);
+            }
+            //Shuffle the array
+            Collections.shuffle(mRandomBlacklistArray,new Random());
+        }
+    }
 }
 
 //TODO - Maybe change the icon
