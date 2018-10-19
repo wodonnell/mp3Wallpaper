@@ -503,7 +503,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(v==mBtnRandom)
         {
-            Random rand = new Random();
             //Determine which list to use for random image
             if (mFilterList.size() > 0){
                 // Get the next entry from the randomArray
@@ -513,9 +512,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         setLimits(Constants.RANDOM_FILTER);
                     }
                     random = mRandomFilterArray.get(0); //Always get the first entry
+
                     mRandomFilterArray.remove(0); //Remove the first entry
                 }
-                position=random;
+                position=random+1;
             }
             //If only looking at favourites
             else if(onlyFavourites){
@@ -528,7 +528,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     random = mRandomFavouriteArray.get(0); //Always get the first entry
                     mRandomFavouriteArray.remove(0); //Remove the first entry
                 }
-                favPosition=random;
+                favPosition=random+1;
             }
             //If only looking at blacklist
             else if(onlyBlacklist){
@@ -541,7 +541,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     random = mRandomBlacklistArray.get(0); //Always get the first entry
                     mRandomBlacklistArray.remove(0); //Remove the first entry
                 }
-                blPosition=random;
+                blPosition=random+1;
             }
             //Otherwise use the main file list
             else if(mFileList.size()>1){
@@ -554,10 +554,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     random = mRandomFileArray.get(0); //Always get the first entry
                     mRandomFileArray.remove(0); //Remove the first entry
                 }
-                position=random;
+                position=random+1;
             }
 
-            setImage(next);
+            setImage(prev);
             //Ensure buttons are visible in case they were removed by collage
             mBtnFavourite.setVisibility(View.VISIBLE);
             mBtnBlacklist.setVisibility(View.VISIBLE);
