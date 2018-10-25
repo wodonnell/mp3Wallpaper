@@ -382,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0,
                             new Intent(this.getApplicationContext(), MainActivity.class).putExtra("importance",
-                                    channel.getImportance()).putExtra("channel_id", ""), PendingIntent.FLAG_UPDATE_CURRENT);
+                                    channel.getImportance()).putExtra("channel_id", CHANNEL_ID), PendingIntent.FLAG_UPDATE_CURRENT);
                 }
 
                 NotificationCompat.Builder notification = new NotificationCompat.Builder(this.getApplicationContext(), CHANNEL_ID)
@@ -391,9 +391,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .setOngoing(true)
                         .setGroup("mp3Wallpaper")
                         .setContentIntent(contentIntent)
+                        .setChannelId(CHANNEL_ID)
                         .setSmallIcon(R.drawable.baseline_music_note_24);
                 //.setSubText(notificationMsg);
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    notificationManager.createNotificationChannel(channel);
+                }
                 notificationManager.notify(1, notification.build());
 
                 //Store in shared preferences
@@ -787,8 +791,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void getCurrentPaper(){
         //Retrieve album name and artist from shared preferences
         currentPath=mSharedPreferences.getString(Constants.PREFERENCES_LASTPATH,null);
-        String albumName=mSharedPreferences.getString(Constants.PREFERENCES_LASTALBUM,null);
-        String artistName=mSharedPreferences.getString(Constants.PREFERENCES_LASTARTIST,null);
+        //String albumName=mSharedPreferences.getString(Constants.PREFERENCES_LASTALBUM,null);
+        //String artistName=mSharedPreferences.getString(Constants.PREFERENCES_LASTARTIST,null);
 
         if (mFileList.contains(currentPath)) {
             position = mFileList.indexOf(currentPath)-1;
@@ -951,7 +955,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     public void updateMeta(String album, String artist) {
         //If album name not blank then show details
-        if(!album.equals("")) {
+        if(!TextUtils.isEmpty(album)){
+        //if(!album.equals("")) {
             mTxtAlbum.setText(album);
             mTxtArtist.setText(artist);
         }
@@ -1055,16 +1060,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         cur_cal.set(Calendar.MINUTE, 59);
         cur_cal.set(Calendar.SECOND, 00);
         cur_cal.add(Calendar.SECOND, 60);
-        //cur_cal.add(Calendar.SECOND, 1); //Start straight away
+        //cur_cal.add(Calendar.SECOND, 30); //Start in 30 seconds
 
-        AlarmManager alarm_manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        AlarmManager alarm_manager = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
 
         //Start at midnight and repeat every 24 hours
-        alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY, pi); //Repeat every day
-        //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi); //Repeat every 15 minutes
+        //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_DAY, pi); //Repeat every day
+        //setAndAllowWhileIdle
+        alarm_manager.cancel(pi);
+        //alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi); //Repeat every 15 minutes
+        alarm_manager.setAndAllowWhileIdle(AlarmManager.RTC, cur_cal.getTimeInMillis(), pi); //Set the alarm
 
         ComponentName receiver = new ComponentName(MainActivity.this, AlarmReceiver.class);
         PackageManager pm = this.getPackageManager();

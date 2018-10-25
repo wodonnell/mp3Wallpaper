@@ -3,6 +3,7 @@ package com.wayneodonnell.mp3wallpaper.models;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.util.Log;
 
 import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM;
 import static android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST;
@@ -17,7 +18,11 @@ public class SongInfo {
     public SongInfo(String path){
         //Extract the embedded image from the specified file
         android.media.MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(path);
+        try {
+            mmr.setDataSource(path);
+        } catch(Exception e){
+            e.printStackTrace();
+        }
 
         byte [] data = mmr.getEmbeddedPicture();
 

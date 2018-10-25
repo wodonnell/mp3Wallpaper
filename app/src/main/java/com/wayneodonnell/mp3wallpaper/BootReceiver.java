@@ -54,8 +54,10 @@ public class BootReceiver extends BroadcastReceiver {
             PendingIntent pi = PendingIntent.getBroadcast(context.getApplicationContext(), 0, intent, 0);
 
             //Start at midnight and repeat every 24 hours
-            alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi); //Repeat every day
+            alarm_manager.cancel(pi);
+            //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi); //Repeat every day
             //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi); //Repeat every 15 minutes
+            alarm_manager.setAndAllowWhileIdle(AlarmManager.RTC, cur_cal.getTimeInMillis(), pi); //Set the alarm
 
             //Show notification advising daily updates turned on
             notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -42,7 +42,7 @@ import butterknife.ButterKnife;
 
 public class ServiceClass extends Service{
     private final static String APP_PACKAGE = "com.wayneodonnell.mp3wallpaper";
-    private final static String CHANNEL_ID = APP_PACKAGE + ".NOTIFICATIONS";
+    private final static String CHANNEL_ID = APP_PACKAGE + ".NOTIFICATIONS_DAILY";
     NotificationManager notificationManager;
     NotificationChannel channel;
     String currentPath="";
@@ -114,7 +114,7 @@ public class ServiceClass extends Service{
 
             contentIntent = PendingIntent.getActivity(this, 0,
                     new Intent(this, MainActivity.class).putExtra("importance",
-                            channel.getImportance()).putExtra("channel_id", ""), PendingIntent.FLAG_UPDATE_CURRENT);
+                            channel.getImportance()).putExtra("channel_id", CHANNEL_ID), PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
 
@@ -125,9 +125,14 @@ public class ServiceClass extends Service{
                 .setContentText(notificationMsg)
                 .setGroup("mp3Wallpaper")
                 .setContentIntent(contentIntent)
+                .setChannelId(CHANNEL_ID)
                 .setSmallIcon(R.drawable.baseline_music_note_24)
                 .setStyle(style);
                 //.setSubText(notificationMsg);
+        //
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.createNotificationChannel(channel);
+        }
 
         notificationManager.notify(2, notification.build());
     }
