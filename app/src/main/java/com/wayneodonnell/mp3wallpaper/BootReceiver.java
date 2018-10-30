@@ -20,6 +20,7 @@ import android.util.Log;
 import java.util.Calendar;
 
 //Receiver called on reboot to reset alarm if necessary
+//also called when application reinstalled.
 
 public class BootReceiver extends BroadcastReceiver {
 
@@ -31,6 +32,7 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        //Log.d("WOD","BootReceiver called");
         setAlarm(context);
     }
 
@@ -50,11 +52,14 @@ public class BootReceiver extends BroadcastReceiver {
 
             AlarmManager alarm_manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-            Intent intent = new Intent(context.getApplicationContext(), AlarmReceiver.class);
+            //Intent intent = new Intent(context.getApplicationContext(), AlarmReceiver.class);
+            Intent intent = new Intent("com.wayneodonnell.mp3wallpaper.CUSTOM_ALARM");
+
             PendingIntent pi = PendingIntent.getBroadcast(context.getApplicationContext(), 0, intent, 0);
 
             //Start at midnight and repeat every 24 hours
             alarm_manager.cancel(pi);
+            pi.cancel();
             //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi); //Repeat every day
             //alarm_manager.setInexactRepeating(AlarmManager.RTC, cur_cal.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi); //Repeat every 15 minutes
             alarm_manager.setAndAllowWhileIdle(AlarmManager.RTC, cur_cal.getTimeInMillis(), pi); //Set the alarm
